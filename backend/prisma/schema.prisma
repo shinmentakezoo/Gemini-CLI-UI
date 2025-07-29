@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String
+  password    String
+  avatar      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastLoginAt DateTime?
+
+  // Relations
+  projects    Project[]
+  sessions    Session[]
+  chatHistory ChatMessage[]
+
+  @@map("users")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  path        String   @unique
+  template    String?
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  files       ProjectFile[]
+  gitCommits  GitCommit[]
+  chatHistory ChatMessage[]
+
+  @@map("projects")
+}
+
+model ProjectFile {
+  id        String   @id @default(cuid())
+  path      String
+  name      String
+  content   String?
+  size      Int?
+  mimeType  String?
+  isFolder  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, path])
+  @@map("project_files")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  type      String   // 'terminal', 'chat', 'editor'
+  data      String   // JSON data for session state
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  role      String   // 'user', 'assistant', 'system'
+  content   String
+  metadata  String?  // JSON metadata (tokens, model, etc.)
+  createdAt DateTime @default(now())
+
+  // Relations
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+model GitCommit {
+  id        String   @id @default(cuid())
+  hash      String
+  message   String
+  author    String
+  email     String
+  date      DateTime
+  branch    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, hash])
+  @@map("git_commits")
+}
+
+model ApiUsage {
+  id        String   @id @default(cuid())
+  service   String   // 'gemini', 'openai', etc.
+  endpoint  String
+  tokens    Int?
+  cost      Float?
+  success   Boolean  @default(true)
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@map("api_usage")
+}
+
+model SystemLog {
+  id        String   @id @default(cuid())
+  level     String   // 'error', 'warn', 'info', 'debug'
+  message   String
+  data      String?  // JSON data
+  source    String?  // Source component/service
+  createdAt DateTime @default(now())
+
+  @@map("system_logs")
+}

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gemini CLI UI - Advanced Web IDE</title>
+    <meta name="description" content="Advanced web-based IDE with AI-powered code generation using Google's Gemini CLI integration" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#000000" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossorigin />
+    
+    <!-- Monaco Editor Worker -->
+    <script>
+      window.MonacoEnvironment = {
+        getWorkerUrl: function (moduleId, label) {
+          if (label === 'json') {
+            return '/monaco-editor/esm/vs/language/json/json.worker.js';
+          }
+          if (label === 'css' || label === 'scss' || label === 'less') {
+            return '/monaco-editor/esm/vs/language/css/css.worker.js';
+          }
+          if (label === 'html' || label === 'handlebars' || label === 'razor') {
+            return '/monaco-editor/esm/vs/language/html/html.worker.js';
+          }
+          if (label === 'typescript' || label === 'javascript') {
+            return '/monaco-editor/esm/vs/language/typescript/ts.worker.js';
+          }
+          return '/monaco-editor/esm/vs/editor/editor.worker.js';
+        }
+      };
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

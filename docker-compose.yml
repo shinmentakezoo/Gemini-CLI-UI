@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # Frontend service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "4009:4009"
+    environment:
+      - VITE_API_URL=http://localhost:4008
+      - VITE_WS_URL=ws://localhost:4008
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - gemini-network
+
+  # Backend service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "4008:4008"
+    environment:
+      - NODE_ENV=development
+      - PORT=4008
+      - DATABASE_URL=file:./data/geminicliui_auth.db
+      - JWT_SECRET=your-development-jwt-secret
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - CORS_ORIGIN=http://localhost:4009
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - backend-data:/app/data
+    depends_on:
+      - redis
+    networks:
+      - gemini-network
+
+  # Redis for caching and session storage
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - gemini-network
+
+  # Optional: Database management UI
+  prisma-studio:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prisma
+    ports:
+      - "5555:5555"
+    environment:
+      - DATABASE_URL=file:./data/geminicliui_auth.db
+    volumes:
+      - ./backend:/app
+      - backend-data:/app/data
+    depends_on:
+      - backend
+    networks:
+      - gemini-network
+    profiles:
+      - tools
+
+volumes:
+  backend-data:
+  redis-data:
+
+networks:
+  gemini-network:
+    driver: bridge
